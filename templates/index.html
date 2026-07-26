@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; margin-top: 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #218838; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; text-align: center; font-size: 18px; font-weight: bold; }
+        .churn-yes { background-color: #f8d7da; color: #721c24; }
+        .churn-no { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Churn Prediction API Tester</h2>
+    <form id="churnForm">
+        <label for="tenure">Tenure (months):</label>
+        <input type="number" id="tenure" name="tenure" required value="1">
+        
+        <label for="MonthlyCharges">Monthly Charges ($):</label>
+        <input type="number" step="0.01" id="MonthlyCharges" name="MonthlyCharges" required value="70.00">
+        
+        <label for="TotalCharges">Total Charges ($):</label>
+        <input type="number" step="0.01" id="TotalCharges" name="TotalCharges" required value="70.00">
+
+        <label for="Contract">Contract:</label>
+        <select id="Contract" name="Contract">
+            <option value="Month-to-month">Month-to-month</option>
+            <option value="One year">One year</option>
+            <option value="Two year">Two year</option>
+        </select>
+        
+        <label for="InternetService">Internet Service:</label>
+        <select id="InternetService" name="InternetService">
+            <option value="Fiber optic">Fiber optic</option>
+            <option value="DSL">DSL</option>
+            <option value="No">No</option>
+        </select>
+        
+        <label for="OnlineSecurity">Online Security:</label>
+        <select id="OnlineSecurity" name="OnlineSecurity">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+        </select>
+        
+        <label for="TechSupport">Tech Support:</label>
+        <select id="TechSupport" name="TechSupport">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="No internet service">No internet service</option>
+        </select>
+
+        <button type="submit">Predict Churn</button>
+    </form>
+
+    <div id="resultBox" class="result" style="display: none;"></div>
+</div>
+
+<script>
+document.getElementById('churnForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert numerical values
+    data.tenure = parseFloat(data.tenure);
+    data.MonthlyCharges = parseFloat(data.MonthlyCharges);
+    data.TotalCharges = parseFloat(data.TotalCharges);
+
+    fetch('/predict', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultBox = document.getElementById('resultBox');
+        resultBox.style.display = 'block';
+        if (data.error) {
+            resultBox.className = 'result churn-yes';
+            resultBox.innerHTML = 'Error: ' + data.error;
+        } else {
+            const isChurn = data.churn_prediction === 1;
+            resultBox.className = 'result ' + (isChurn ? 'churn-yes' : 'churn-no');
+            resultBox.innerHTML = isChurn 
+                ? `High Risk of Churn! (Probability: ${(data.churn_probability * 100).toFixed(1)}%)`
+                : `Low Risk of Churn. (Probability: ${(data.churn_probability * 100).toFixed(1)}%)`;
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
+</body>
+</html>
